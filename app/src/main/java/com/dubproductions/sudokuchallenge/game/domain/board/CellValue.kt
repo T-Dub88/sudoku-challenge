@@ -1,6 +1,6 @@
 package com.dubproductions.sudokuchallenge.game.domain.board
 
-enum class CellValue(numericValue: Int) {
+enum class CellValue(val numericValue: Int) {
     EMPTY(0),
     ONE(1),
     TWO(2),
