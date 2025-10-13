@@ -76,7 +76,7 @@ class PuzzleScreenViewModel(
     init {
         viewModelScope.launch {
             _boardState.update {
-                puzzleRepository.fetchPuzzle(Difficulty.EASY)
+                puzzleRepository.fetchPuzzle(Difficulty.MEDIUM)
             }
         }
         startTimer()

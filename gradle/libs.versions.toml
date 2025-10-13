@@ -10,6 +10,8 @@ activityCompose = "1.11.0"
 composeBom = "2025.09.00"
 materialIconsCore = "1.7.8"
 koinVersion = "4.1.1"
+retrofitVersion = "3.0.0"
+moshiVersion = "1.15.2"
 
 [libraries]
 androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIconsCore" }
@@ -28,10 +30,12 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha04" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha06" }
 io-insert-koin = { group = "io.insert-koin", name = "koin-core", version.ref = "koinVersion" }
 io-insert-koin-andriod = { group = "io.insert-koin", name = "koin-android", version.ref = "koinVersion" }
 io-insert-koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinVersion" }
+com-squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofitVersion" }
+com-squareup-moshi = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshiVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
