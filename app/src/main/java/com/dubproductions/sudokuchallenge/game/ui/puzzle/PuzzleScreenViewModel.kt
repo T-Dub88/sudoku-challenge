@@ -8,6 +8,7 @@ import com.dubproductions.sudokuchallenge.game.domain.board.Cell
 import com.dubproductions.sudokuchallenge.game.domain.board.CellValue
 import com.dubproductions.sudokuchallenge.game.domain.puzzle.Difficulty
 import com.dubproductions.sudokuchallenge.game.domain.repository.PuzzleRepository
+import com.dubproductions.sudokuchallenge.game.domain.util.Result
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.SelectedCellState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -75,10 +76,18 @@ class PuzzleScreenViewModel(
 
     init {
         viewModelScope.launch {
-            _boardState.update {
-                puzzleRepository.fetchPuzzle(Difficulty.MEDIUM)
+            val result = puzzleRepository.fetchPuzzle(Difficulty.MEDIUM)
+
+            when (result) {
+                is Result.Success -> {
+                    _boardState.update {
+                        result.data
+                    }
+                }
+                is Result.Error -> { } // TODO: Handle displaying error message
             }
         }
+
         startTimer()
     }
 
