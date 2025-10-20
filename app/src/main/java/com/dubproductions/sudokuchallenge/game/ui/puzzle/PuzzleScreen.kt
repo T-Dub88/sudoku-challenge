@@ -331,9 +331,9 @@ fun SudokuCell(
     val highlightRegions = (isInSelectedRegion || isInSelectedColumn || isInSelectedRow) && !isInLockedMode
 
     val cellColor = when {
-        isSelected && isWrongAnswer -> MaterialTheme.colorScheme.error
+        isSelected && !isInLockedMode && isWrongAnswer -> MaterialTheme.colorScheme.error
         isWrongAnswer -> MaterialTheme.colorScheme.errorContainer
-        isSelected -> MaterialTheme.colorScheme.tertiaryContainer
+        isSelected && !isInLockedMode -> MaterialTheme.colorScheme.tertiaryContainer
         isSameAsSelectedNumber || highlightRegions -> MaterialTheme.colorScheme.secondaryContainer
         else -> MaterialTheme.colorScheme.surfaceContainer
     }
@@ -383,6 +383,7 @@ fun SudokuCell(
                 miniCellSize = miniCellSize,
                 isSelected = isSelected,
                 selectedCellNum = selectedCellNum,
+                isInLockedMode = isInLockedMode,
                 highlightRegions = highlightRegions
             )
         }
@@ -395,9 +396,9 @@ fun SudokuCell(
                 autoSize = TextAutoSize.StepBased(),
                 style = TextStyle(
                     color = when {
-                        isSelected && isWrongAnswer -> MaterialTheme.colorScheme.onError
+                        isSelected && !isInLockedMode && isWrongAnswer -> MaterialTheme.colorScheme.onError
                         isWrongAnswer -> MaterialTheme.colorScheme.onErrorContainer
-                        isSelected -> MaterialTheme.colorScheme.onTertiaryContainer
+                        isSelected && !isInLockedMode -> MaterialTheme.colorScheme.onTertiaryContainer
                         isSameAsSelectedNumber || highlightRegions -> MaterialTheme.colorScheme.onSecondaryContainer
                         else -> MaterialTheme.colorScheme.onSurface
                     }
@@ -413,6 +414,7 @@ fun NotesGrid(
     miniCellSize: Dp,
     isSelected: Boolean,
     selectedCellNum: Int?,
+    isInLockedMode: Boolean,
     highlightRegions: Boolean
 ) {
     Column(
@@ -431,7 +433,7 @@ fun NotesGrid(
                     val noteNumber = row * 3 + column + 1
                     val noteExists = notesSet.any { it.numericValue == noteNumber }
                     val cellColor = when {
-                        isSelected -> MaterialTheme.colorScheme.tertiaryContainer
+                        isSelected && !isInLockedMode -> MaterialTheme.colorScheme.tertiaryContainer
                         (noteNumber == selectedCellNum && noteExists) || highlightRegions -> MaterialTheme.colorScheme.secondaryContainer
                         else -> MaterialTheme.colorScheme.surfaceContainer
                     }
@@ -457,7 +459,7 @@ fun NotesGrid(
                             autoSize = TextAutoSize.StepBased(),
                             style = TextStyle(
                                 color = when {
-                                    noteNumber == selectedCellNum || isSelected -> MaterialTheme.colorScheme.onTertiaryContainer
+                                    noteNumber == selectedCellNum || (isSelected && !isInLockedMode) -> MaterialTheme.colorScheme.onTertiaryContainer
                                     highlightRegions -> MaterialTheme.colorScheme.onSecondaryContainer
                                     else -> MaterialTheme.colorScheme.onSurface
                                 }
