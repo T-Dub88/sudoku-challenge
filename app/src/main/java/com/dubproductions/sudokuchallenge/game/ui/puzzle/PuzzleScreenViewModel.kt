@@ -129,7 +129,7 @@ class PuzzleScreenViewModel(
 
     fun resolveCellPress(num: Int?, row: Int?, colum: Int?) {
         updatedSelectedCell(num, row, colum)
-        if (isInLockedMode.value) {
+        if (isInLockedMode.value && selectedNumber.value != null) {
             if (isInNotesMode.value) {
                 updateCellNotes(selectedNumber.value)
             } else {
