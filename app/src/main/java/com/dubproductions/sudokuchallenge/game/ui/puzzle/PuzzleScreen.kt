@@ -459,7 +459,8 @@ fun NotesGrid(
                             autoSize = TextAutoSize.StepBased(),
                             style = TextStyle(
                                 color = when {
-                                    noteNumber == selectedCellNum || (isSelected && !isInLockedMode) -> MaterialTheme.colorScheme.onTertiaryContainer
+                                    noteNumber == selectedCellNum -> MaterialTheme.colorScheme.onSecondaryContainer
+                                    isSelected && !isInLockedMode -> MaterialTheme.colorScheme.onTertiaryContainer
                                     highlightRegions -> MaterialTheme.colorScheme.onSecondaryContainer
                                     else -> MaterialTheme.colorScheme.onSurface
                                 }
