@@ -157,6 +157,8 @@ class PuzzleScreenViewModel(
                     val oldRow = oldBoard.puzzleGrid[oldRowNum]
                     val oldCell = oldRow[oldColumnNum]
 
+                    if (oldCell.isGiven) return
+
                     val newCell = oldCell.copy(
                         answer = convertNumToCellValue(newNum)
                     )

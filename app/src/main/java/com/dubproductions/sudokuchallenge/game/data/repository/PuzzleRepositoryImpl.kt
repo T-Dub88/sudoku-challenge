@@ -46,6 +46,7 @@ class PuzzleRepositoryImpl(
         return responsePuzzle.map { responseRow ->
             responseRow.map { responseCellValue ->
                 Cell(
+                    isGiven = responseCellValue != 0,
                     answer = CellValue.entries.single { it.numericValue == responseCellValue },
                 )
             }
