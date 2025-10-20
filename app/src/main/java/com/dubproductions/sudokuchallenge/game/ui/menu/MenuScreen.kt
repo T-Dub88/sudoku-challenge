@@ -113,9 +113,8 @@ private fun MenuScreenContent(
                 ) {
                     Text("Cancel")
                 }
-            },
-
-            )
+            }
+        )
     }
 }
 

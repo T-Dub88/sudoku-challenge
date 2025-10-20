@@ -68,4 +68,10 @@ dependencies {
     implementation(libs.io.insert.koin)
     implementation(libs.io.insert.koin.compose)
     implementation(libs.io.insert.koin.andriod)
+
+    // Retrofit
+    implementation(libs.com.squareup.retrofit2)
+
+    // Moshi
+    implementation(libs.com.squareup.moshi)
 }
