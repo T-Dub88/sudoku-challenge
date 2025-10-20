@@ -129,7 +129,7 @@ class PuzzleScreenViewModel(
 
     fun resolveCellPress(num: Int?, row: Int?, colum: Int?) {
         updatedSelectedCell(num, row, colum)
-        if (isInLockedMode.value) {
+        if (isInLockedMode.value && selectedNumber.value != null) {
             if (isInNotesMode.value) {
                 updateCellNotes(selectedNumber.value)
             } else {
@@ -156,6 +156,8 @@ class PuzzleScreenViewModel(
                 modifiedColumnNum?.let { oldColumnNum ->
                     val oldRow = oldBoard.puzzleGrid[oldRowNum]
                     val oldCell = oldRow[oldColumnNum]
+
+                    if (oldCell.isGiven) return
 
                     val newCell = oldCell.copy(
                         answer = convertNumToCellValue(newNum)
