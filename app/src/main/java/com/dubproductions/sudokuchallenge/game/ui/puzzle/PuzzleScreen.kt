@@ -431,8 +431,8 @@ fun NotesGrid(
                     val noteNumber = row * 3 + column + 1
                     val noteExists = notesSet.any { it.numericValue == noteNumber }
                     val cellColor = when {
-                        (noteNumber == selectedCellNum && noteExists) || isSelected -> MaterialTheme.colorScheme.tertiaryContainer
-                        highlightRegions -> MaterialTheme.colorScheme.secondaryContainer
+                        isSelected -> MaterialTheme.colorScheme.tertiaryContainer
+                        (noteNumber == selectedCellNum && noteExists) || highlightRegions -> MaterialTheme.colorScheme.secondaryContainer
                         else -> MaterialTheme.colorScheme.surfaceContainer
                     }
 
