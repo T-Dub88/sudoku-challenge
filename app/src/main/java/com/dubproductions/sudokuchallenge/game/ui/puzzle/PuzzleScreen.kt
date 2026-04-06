@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -56,7 +57,6 @@ import com.dubproductions.sudokuchallenge.game.domain.board.Board
 import com.dubproductions.sudokuchallenge.game.domain.board.CellValue
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.SelectedCellState
 import org.koin.androidx.compose.koinViewModel
-import java.util.Locale
 
 @Composable
 fun PuzzleScreen() {
@@ -130,7 +130,7 @@ fun PuzzleScreenContent(
             ) {
                 Text(
                     text = "Play time: ${String.format(
-                        Locale.getDefault(),
+                        LocalLocale.current.platformLocale,
                         "%02d:%02d",
                         minutesElapsed,
                         secondsElapsed
