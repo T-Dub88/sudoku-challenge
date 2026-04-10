@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -22,6 +23,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Lock
@@ -30,9 +32,11 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,18 +47,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dubproductions.sudokuchallenge.game.domain.board.Board
 import com.dubproductions.sudokuchallenge.game.domain.board.CellValue
+import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.GameState
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.SelectedCellState
 import org.koin.androidx.compose.koinViewModel
 
@@ -69,27 +74,110 @@ fun PuzzleScreen() {
     val selectedNumber by viewModel.selectedNumber.collectAsStateWithLifecycle()
     val isInLockedMode by viewModel.isInLockedMode.collectAsStateWithLifecycle()
     val isInNotesMode by viewModel.isInNotesMode.collectAsStateWithLifecycle()
+    val gameState by viewModel.gameState.collectAsStateWithLifecycle()
+    val mistakeCount by viewModel.mistakeCount.collectAsStateWithLifecycle()
 
-    PuzzleScreenContent(
-        board = board,
-        selectedCell = selectedCellCoordinates,
-        playTime = playTime,
-        isPaused = isPaused,
-        selectedNumber = selectedNumber,
-        isInLockedMode = isInLockedMode,
-        isInNotesMode = isInNotesMode,
-        onCellSelected = viewModel::resolveCellPress,
-        onNumberPressed = viewModel::resolveNumberPress,
-        onPausePressed = viewModel::toggleGamePause,
-        calculateRegionSelection = viewModel::calculateRegionSelection,
-        onDeletePressed = {
-            viewModel.updatedCellNumber(null)
-            viewModel.updateCellNotes(null)
-        },
-        onUndoPressed = viewModel::undoPreviousAction,
-        onLockPressed = viewModel::toggleLockedMode,
-        onNotesPressed = viewModel::toggleNotesMode
-    )
+    when (gameState) {
+        GameState.LOADING -> MyLoadingIndicator()
+        GameState.PLAYING -> {
+            PuzzleScreenContent(
+                board = board,
+                selectedCell = selectedCellCoordinates,
+                playTime = playTime,
+                isPaused = isPaused,
+                selectedNumber = selectedNumber,
+                isInLockedMode = isInLockedMode,
+                isInNotesMode = isInNotesMode,
+                onCellSelected = viewModel::resolveCellPress,
+                onNumberPressed = viewModel::resolveNumberPress,
+                onPausePressed = viewModel::toggleGamePause,
+                calculateRegionSelection = viewModel::calculateRegionSelection,
+                onDeletePressed = {
+                    viewModel.updatedCellNumber(null)
+                    viewModel.updateCellNotes(null)
+                },
+                onUndoPressed = viewModel::undoPreviousAction,
+                onLockPressed = viewModel::toggleLockedMode,
+                onNotesPressed = viewModel::toggleNotesMode
+            )
+        }
+        GameState.WIN -> WinIndicator(
+            mistakeCount = mistakeCount,
+            playTime = playTime
+        )
+        GameState.ERROR -> TODO()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WinIndicator(
+    mistakeCount: Int,
+    playTime: Long
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+    ) {
+        Text(
+            fontSize = 30.sp,
+            text = "Puzzle Complete!",
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Icon(
+            modifier = Modifier
+                .size(100.dp),
+            imageVector = Icons.Default.CheckCircleOutline,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            fontSize = 20.sp,
+            text = playTimeString(playTime, Locale.current.platformLocale),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Text(
+            fontSize = 20.sp,
+            text = "Mistake Count: $mistakeCount",
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun MyLoadingIndicator() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LoadingIndicator()
+        Text(
+            text = "Loading Puzzle",
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+private fun playTimeString(playTime: Long, locale: java.util.Locale): String {
+    val minutesElapsed = playTime / 60
+    val secondsElapsed = playTime % 60
+
+    return "Play time: ${String.format(
+        locale,
+        "%02d:%02d",
+        minutesElapsed,
+        secondsElapsed
+    )}"
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -111,9 +199,6 @@ fun PuzzleScreenContent(
     onLockPressed: () -> Unit,
     onNotesPressed: () -> Unit
 ) {
-    val minutesElapsed = playTime / 60
-    val secondsElapsed = playTime % 60
-
     Scaffold { scaffoldPadding ->
         Column(
             modifier = Modifier
@@ -129,12 +214,7 @@ fun PuzzleScreenContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Play time: ${String.format(
-                        LocalLocale.current.platformLocale,
-                        "%02d:%02d",
-                        minutesElapsed,
-                        secondsElapsed
-                    )}",
+                    text = playTimeString(playTime, Locale.current.platformLocale),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(

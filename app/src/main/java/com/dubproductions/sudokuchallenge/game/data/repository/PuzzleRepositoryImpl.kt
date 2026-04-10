@@ -36,7 +36,7 @@ class PuzzleRepositoryImpl(
         val newBoard = Board(
             puzzleGrid = createGrid(serverResponse.puzzle),
             solutionGrid = createGrid(serverResponse.solution),
-            difficulty = Difficulty.entries.single { it.text.lowercase() == serverResponse.difficulty.lowercase() }
+            difficulty = Difficulty.entries.single { it.text.equals(serverResponse.difficulty, ignoreCase = true) }
         )
 
         return newBoard

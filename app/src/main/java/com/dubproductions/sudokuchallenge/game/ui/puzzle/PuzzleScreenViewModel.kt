@@ -1,6 +1,5 @@
 package com.dubproductions.sudokuchallenge.game.ui.puzzle
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dubproductions.sudokuchallenge.game.domain.board.Board
@@ -9,6 +8,7 @@ import com.dubproductions.sudokuchallenge.game.domain.board.CellValue
 import com.dubproductions.sudokuchallenge.game.domain.puzzle.Difficulty
 import com.dubproductions.sudokuchallenge.game.domain.repository.PuzzleRepository
 import com.dubproductions.sudokuchallenge.game.domain.util.Result
+import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.GameState
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.SelectedCellState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -24,6 +24,7 @@ class PuzzleScreenViewModel(
     private var savedTime = 0L
 
     private val previousBoardStateCache = ArrayDeque(listOf<Board>())
+    private lateinit var solutionString: String
 
     private val _boardState = MutableStateFlow(
         Board(
@@ -72,23 +73,39 @@ class PuzzleScreenViewModel(
     private val _isInNotesMode = MutableStateFlow(false)
     val isInNotesMode  = _isInNotesMode.asStateFlow()
 
+    private val _gameState = MutableStateFlow(GameState.LOADING)
+    val gameState = _gameState.asStateFlow()
+
+    private val _mistakeCount = MutableStateFlow(0)
+    val mistakeCount = _mistakeCount.asStateFlow()
+
     private var timer: Job? = null
 
     init {
         viewModelScope.launch {
-            val result = puzzleRepository.fetchPuzzle(Difficulty.MEDIUM)
+            val result = puzzleRepository.fetchPuzzle(Difficulty.EASY)
 
             when (result) {
                 is Result.Success -> {
                     _boardState.update {
                         result.data
                     }
+
+                    solutionString = convertBoardToString(result.data.solutionGrid)
+
+                    _gameState.update {
+                        GameState.PLAYING
+                    }
+
+                    startTimer()
                 }
-                is Result.Error -> { } // TODO: Handle displaying error message
+                is Result.Error -> {
+                    _gameState.update {
+                        GameState.ERROR
+                    }
+                }
             }
         }
-
-        startTimer()
     }
 
     fun toggleNotesMode() {
@@ -100,9 +117,13 @@ class PuzzleScreenViewModel(
     fun updatedSelectedCell(num: Int?, row: Int?, column: Int?, keepRowColumn: Boolean = false) {
         _selectedCellCoordinates.update {
             if (keepRowColumn) {
-                it.copy(num)
+                it.copy(selectedNumber = num)
             } else {
-                it.copy(num, row, column)
+                it.copy(
+                    selectedNumber = num,
+                    selectedRow = row,
+                    selectedColumn = column
+                )
             }
         }
     }
@@ -159,6 +180,11 @@ class PuzzleScreenViewModel(
 
                     if (oldCell.isGiven) return
 
+                    val solutionRow = oldBoard.solutionGrid[oldRowNum]
+                    val solutionCell = solutionRow[oldColumnNum]
+
+                    if (solutionCell.answer.numericValue != newNum) updateMistakeCount()
+
                     val newCell = oldCell.copy(
                         answer = convertNumToCellValue(newNum)
                     )
@@ -204,12 +230,27 @@ class PuzzleScreenViewModel(
     }
 
     private fun checkForWin() {
-        val solution = boardState.value.solutionGrid
-        val currentBoard = boardState.value.puzzleGrid
+        val currentBoard = convertBoardToString(boardState.value.puzzleGrid)
 
-        if (solution == currentBoard) {
-            // Todo: Add winning dialog and display state
-            Log.i("TAG", "checkForWin: You win")
+        if (solutionString == currentBoard) {
+            timer?.cancel()
+            _gameState.update {
+                GameState.WIN
+            }
+        }
+    }
+
+    private fun convertBoardToString(grid: List<List<Cell>>): String {
+        return grid.joinToString(separator = "") { row ->
+            row.joinToString(separator = "") { cell ->
+                cell.answer.toString()
+            }
+        }
+    }
+
+    private fun updateMistakeCount() {
+        _mistakeCount.update {
+            it + 1
         }
     }
 
