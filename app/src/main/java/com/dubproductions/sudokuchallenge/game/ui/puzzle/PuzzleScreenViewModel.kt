@@ -10,16 +10,29 @@ import com.dubproductions.sudokuchallenge.game.domain.repository.PuzzleRepositor
 import com.dubproductions.sudokuchallenge.game.domain.util.Result
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.GameState
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.SelectedCellState
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class PuzzleScreenViewModel(
-    private val puzzleRepository: PuzzleRepository
+@HiltViewModel(assistedFactory = PuzzleScreenViewModel.Factory::class)
+class PuzzleScreenViewModel @AssistedInject constructor(
+    private val puzzleRepository: PuzzleRepository,
+    @Assisted difficulty: Difficulty
 ) : ViewModel() {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(difficulty: Difficulty): PuzzleScreenViewModel
+    }
+
     private var timerStartTime = System.currentTimeMillis()
     private var savedTime = 0L
 
@@ -83,7 +96,7 @@ class PuzzleScreenViewModel(
 
     init {
         viewModelScope.launch {
-            val result = puzzleRepository.fetchPuzzle(Difficulty.EASY)
+            val result = puzzleRepository.fetchPuzzle(difficulty)
 
             when (result) {
                 is Result.Success -> {

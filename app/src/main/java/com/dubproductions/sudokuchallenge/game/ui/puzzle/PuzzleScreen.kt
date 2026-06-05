@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -23,7 +22,6 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Lock
@@ -32,7 +30,6 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,133 +53,67 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dubproductions.sudokuchallenge.game.domain.board.Board
 import com.dubproductions.sudokuchallenge.game.domain.board.CellValue
+import com.dubproductions.sudokuchallenge.game.domain.puzzle.Difficulty
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.GameState
 import com.dubproductions.sudokuchallenge.game.ui.puzzle.state.SelectedCellState
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun PuzzleScreen() {
-    val viewModel = koinViewModel<PuzzleScreenViewModel>()
-
-    val board by viewModel.boardState.collectAsStateWithLifecycle()
-    val selectedCellCoordinates by viewModel.selectedCellCoordinates.collectAsStateWithLifecycle()
-    val playTime by viewModel.playTime.collectAsStateWithLifecycle()
-    val isPaused by viewModel.isPaused.collectAsStateWithLifecycle()
-    val selectedNumber by viewModel.selectedNumber.collectAsStateWithLifecycle()
-    val isInLockedMode by viewModel.isInLockedMode.collectAsStateWithLifecycle()
-    val isInNotesMode by viewModel.isInNotesMode.collectAsStateWithLifecycle()
-    val gameState by viewModel.gameState.collectAsStateWithLifecycle()
-    val mistakeCount by viewModel.mistakeCount.collectAsStateWithLifecycle()
-
-    when (gameState) {
-        GameState.LOADING -> MyLoadingIndicator()
-        GameState.PLAYING -> {
-            PuzzleScreenContent(
-                board = board,
-                selectedCell = selectedCellCoordinates,
-                playTime = playTime,
-                isPaused = isPaused,
-                selectedNumber = selectedNumber,
-                isInLockedMode = isInLockedMode,
-                isInNotesMode = isInNotesMode,
-                onCellSelected = viewModel::resolveCellPress,
-                onNumberPressed = viewModel::resolveNumberPress,
-                onPausePressed = viewModel::toggleGamePause,
-                calculateRegionSelection = viewModel::calculateRegionSelection,
-                onDeletePressed = {
-                    viewModel.updatedCellNumber(null)
-                    viewModel.updateCellNotes(null)
-                },
-                onUndoPressed = viewModel::undoPreviousAction,
-                onLockPressed = viewModel::toggleLockedMode,
-                onNotesPressed = viewModel::toggleNotesMode
-            )
+fun PuzzleScreen(
+    difficulty: Difficulty,
+    puzzleScreenViewModel: PuzzleScreenViewModel = hiltViewModel<PuzzleScreenViewModel, PuzzleScreenViewModel.Factory>(
+        creationCallback = { factory ->
+            factory.create(difficulty)
         }
-        GameState.WIN -> WinIndicator(
-            mistakeCount = mistakeCount,
-            playTime = playTime
-        )
-        GameState.ERROR -> TODO()
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun WinIndicator(
-    mistakeCount: Int,
-    playTime: Long
+    ),
+    onGameComplete: (playTime: Long, mistakeCount: Int) -> Unit,
+    onError: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
-    ) {
-        Text(
-            fontSize = 30.sp,
-            text = "Puzzle Complete!",
-            color = MaterialTheme.colorScheme.onSurface
-        )
+    val board by puzzleScreenViewModel.boardState.collectAsStateWithLifecycle()
+    val selectedCellCoordinates by puzzleScreenViewModel.selectedCellCoordinates.collectAsStateWithLifecycle()
+    val playTime by puzzleScreenViewModel.playTime.collectAsStateWithLifecycle()
+    val isPaused by puzzleScreenViewModel.isPaused.collectAsStateWithLifecycle()
+    val selectedNumber by puzzleScreenViewModel.selectedNumber.collectAsStateWithLifecycle()
+    val isInLockedMode by puzzleScreenViewModel.isInLockedMode.collectAsStateWithLifecycle()
+    val isInNotesMode by puzzleScreenViewModel.isInNotesMode.collectAsStateWithLifecycle()
+    val gameState by puzzleScreenViewModel.gameState.collectAsStateWithLifecycle()
 
-        Icon(
-            modifier = Modifier
-                .size(100.dp),
-            imageVector = Icons.Default.CheckCircleOutline,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Text(
-            fontSize = 20.sp,
-            text = playTimeString(playTime, Locale.current.platformLocale),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Text(
-            fontSize = 20.sp,
-            text = "Mistake Count: $mistakeCount",
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
+    PuzzleScreenContent(
+        gameState = gameState,
+        board = board,
+        selectedCell = selectedCellCoordinates,
+        playTime = playTime,
+        isPaused = isPaused,
+        isInLockedMode = isInLockedMode,
+        isInNotesMode = isInNotesMode,
+        selectedNumber = selectedNumber,
+        onCellSelected = puzzleScreenViewModel::updatedSelectedCell,
+        onNumberPressed = puzzleScreenViewModel::resolveNumberPress,
+        onPausePressed = puzzleScreenViewModel::toggleGamePause,
+        calculateRegionSelection = puzzleScreenViewModel::calculateRegionSelection,
+        onDeletePressed = {
+            puzzleScreenViewModel.updatedCellNumber(null)
+            puzzleScreenViewModel.updateCellNotes(null)
+        },
+        onUndoPressed = puzzleScreenViewModel::undoPreviousAction,
+        onLockPressed = puzzleScreenViewModel::toggleLockedMode,
+        onNotesPressed = puzzleScreenViewModel::toggleNotesMode,
+        onGameComplete = {
+            onGameComplete(playTime, puzzleScreenViewModel.mistakeCount.value)
+        },
+        onError = onError
+    )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun MyLoadingIndicator() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        LoadingIndicator()
-        Text(
-            text = "Loading Puzzle",
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
 
-private fun playTimeString(playTime: Long, locale: java.util.Locale): String {
-    val minutesElapsed = playTime / 60
-    val secondsElapsed = playTime % 60
-
-    return "Play time: ${String.format(
-        locale,
-        "%02d:%02d",
-        minutesElapsed,
-        secondsElapsed
-    )}"
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PuzzleScreenContent(
+    gameState: GameState,
     board: Board,
     selectedCell: SelectedCellState,
     playTime: Long,
@@ -197,64 +128,136 @@ fun PuzzleScreenContent(
     onDeletePressed: () -> Unit,
     onUndoPressed: () -> Unit,
     onLockPressed: () -> Unit,
-    onNotesPressed: () -> Unit
+    onNotesPressed: () -> Unit,
+    onGameComplete: () -> Unit,
+    onError: () -> Unit
 ) {
     Scaffold { scaffoldPadding ->
-        Column(
-            modifier = Modifier
-                .padding(scaffoldPadding)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = playTimeString(playTime, Locale.current.platformLocale),
-                    color = MaterialTheme.colorScheme.onSurface
+        when (gameState) {
+            GameState.LOADING -> {
+                MyLoadingIndicator(
+                    modifier = Modifier.padding(scaffoldPadding)
                 )
-                IconButton(
-                    onClick = onPausePressed,
-                ) {
-                    Icon(
-                        imageVector = if (isPaused) {
-                            Icons.Default.PlayArrow
-                        } else {
-                            Icons.Default.Pause
-                        },
-                        contentDescription = "Pause or resume the game.",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
             }
-
-            SudokuBoard(
-                board = board,
-                selectedCell = selectedCell,
-                onCellSelected = onCellSelected,
-                isPaused = isPaused,
-                isInLockedMode = isInLockedMode,
-                calculateRegionSelection = calculateRegionSelection
-            )
-
-            OptionsButtonContainer(
-                isInLockedMode = isInLockedMode,
-                isInNotesMode = isInNotesMode,
-                onDeletePressed = onDeletePressed,
-                onUndoPressed = onUndoPressed,
-                onLockPressed = onLockPressed,
-                onNotesPressed = onNotesPressed
-            )
-
-            TestButtonGroup(
-                onNumberPressed = onNumberPressed,
-                selectedNumber = selectedNumber
-            )
+            GameState.PLAYING -> {
+                GameInProgress(
+                    modifier = Modifier.padding(scaffoldPadding),
+                    playTime = playTime,
+                    isPaused = isPaused,
+                    board = board,
+                    selectedCell = selectedCell,
+                    isInLockedMode = isInLockedMode,
+                    isInNotesMode = isInNotesMode,
+                    selectedNumber = selectedNumber,
+                    onUndoPressed = onUndoPressed,
+                    onDeletePressed = onDeletePressed,
+                    onLockPressed = onLockPressed,
+                    onNotesPressed = onNotesPressed,
+                    onNumberPressed = onNumberPressed,
+                    calculateRegionSelection = calculateRegionSelection,
+                    onCellSelected = onCellSelected,
+                    onPausePressed = onPausePressed
+                )
+            }
+            GameState.WIN -> onGameComplete()
+            GameState.ERROR -> onError()
         }
+
+
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun MyLoadingIndicator(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LoadingIndicator()
+        Text(
+            text = "Loading Puzzle",
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+fun GameInProgress(
+    modifier: Modifier = Modifier,
+    playTime: Long,
+    isPaused: Boolean,
+    board: Board,
+    selectedCell: SelectedCellState,
+    isInLockedMode: Boolean,
+    isInNotesMode: Boolean,
+    selectedNumber: Int?,
+    onUndoPressed: () -> Unit,
+    onDeletePressed: () -> Unit,
+    onLockPressed: () -> Unit,
+    onNotesPressed: () -> Unit,
+    onNumberPressed: (Int) -> Unit,
+    calculateRegionSelection: (Int?, Int?, Int, Int) -> Boolean,
+    onCellSelected: (num: Int, row: Int, column: Int) -> Unit,
+    onPausePressed: () -> Unit,
+
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = playTimeString(playTime, Locale.current.platformLocale),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            IconButton(
+                onClick = onPausePressed,
+            ) {
+                Icon(
+                    imageVector = if (isPaused) {
+                        Icons.Default.PlayArrow
+                    } else {
+                        Icons.Default.Pause
+                    },
+                    contentDescription = "Pause or resume the game.",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        SudokuBoard(
+            board = board,
+            selectedCell = selectedCell,
+            onCellSelected = onCellSelected,
+            isPaused = isPaused,
+            isInLockedMode = isInLockedMode,
+            calculateRegionSelection = calculateRegionSelection
+        )
+
+        OptionsButtonContainer(
+            isInLockedMode = isInLockedMode,
+            isInNotesMode = isInNotesMode,
+            onDeletePressed = onDeletePressed,
+            onUndoPressed = onUndoPressed,
+            onLockPressed = onLockPressed,
+            onNotesPressed = onNotesPressed
+        )
+
+        TestButtonGroup(
+            onNumberPressed = onNumberPressed,
+            selectedNumber = selectedNumber
+        )
     }
 }
 
@@ -551,4 +554,16 @@ fun NotesGrid(
             }
         }
     }
+}
+
+fun playTimeString(playTime: Long, locale: java.util.Locale): String {
+    val minutesElapsed = playTime / 60
+    val secondsElapsed = playTime % 60
+
+    return "Play time: ${String.format(
+        locale,
+        "%02d:%02d",
+        minutesElapsed,
+        secondsElapsed
+    )}"
 }

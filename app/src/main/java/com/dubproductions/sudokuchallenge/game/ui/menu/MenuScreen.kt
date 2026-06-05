@@ -29,22 +29,21 @@ import com.dubproductions.sudokuchallenge.game.domain.puzzle.Difficulty
 
 @Composable
 fun MenuScreen(
-    navigateToPuzzleScreen: (Difficulty) -> Unit
+    navigateToPuzzleScreen: (Difficulty) -> Unit,
+    menuScreenViewModel: MenuScreenViewModel = viewModel()
 ) {
-    val viewModel = viewModel<MenuScreenViewModel>()
-
-    val selectedDifficulty by viewModel.selectedDifficulty.collectAsStateWithLifecycle()
-    val displayDialog by viewModel.showNewGameDialog.collectAsStateWithLifecycle()
+    val selectedDifficulty by menuScreenViewModel.selectedDifficulty.collectAsStateWithLifecycle()
+    val displayDialog by menuScreenViewModel.showNewGameDialog.collectAsStateWithLifecycle()
 
     MenuScreenContent(
         displayDifficultyDialog = displayDialog,
         selectedDifficulty = selectedDifficulty,
-        onNewGameClick = { viewModel.updateNewGameDialogVisibility(true) },
+        onNewGameClick = { menuScreenViewModel.updateNewGameDialogVisibility(true) },
         onDismissDialog = { startGame ->
-            viewModel.updateNewGameDialogVisibility(false)
+            menuScreenViewModel.updateNewGameDialogVisibility(false)
             if (startGame) navigateToPuzzleScreen(selectedDifficulty)
         },
-        onDifficultySelected = viewModel::updateSelectedDifficultyState
+        onDifficultySelected = menuScreenViewModel::updateSelectedDifficultyState
     )
 }
 
